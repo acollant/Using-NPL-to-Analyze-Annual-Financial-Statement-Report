@@ -1,0 +1,653 @@
+---
+title: "Financial Statements Analysis"
+author: 
+    - Group 1
+output: 
+  html_document  :
+    numbersections: true
+    pagetitle: "Group Assigment"
+    df_print: paged
+    toc: true
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = FALSE,
+                      warning = FALSE,
+                      message = FALSE)
+
+install.packages_ <- function ( pkgs ) {
+  for(p in pkgs){
+    if(!require(p,character.only = TRUE)) install.packages(p)
+    library(p,character.only = TRUE)
+  }  
+}
+
+required.pckgs = c('plyr','ggplot2','pdftools','readr','tm','tidytext','markdown',
+                  'RColorBrewer','wordcloud','SnowballC','cluster','tidyverse','dplyr')
+                  
+install.packages_(required.pckgs)
+rm(list = ls(all.names = TRUE)) #will clear all objects includes hidden objects.
+#gc()
+
+
+# library(markdown)
+# library(plyr)
+# library(ggplot2)
+# library(pdftools)
+# library(readr)
+# library(tm)
+# library(tidytext)
+# library(RColorBrewer)
+# library(wordcloud)
+# library(SnowballC)
+
+
+
+get.files_ <- function ( dest, ext ) {
+  files <- list.files(path = dest, pattern = ext,  full.names = TRUE)
+  return(files)
+}
+
+get.doc.corp <- function ( files_ ) {
+
+  corp_ <- Corpus(URISource(files_),
+                 readerControl = list(reader = readPDF))
+  
+  corp_ <- tm_map(corp_, removePunctuation, ucp = TRUE)
+  
+  return(corp_)
+}
+
+get.doc.terms_ <- function ( corp_ ) {
+  corp_ <- tm_map(corp_, removePunctuation, ucp = TRUE)
+  term_ <- TermDocumentMatrix(corp_, 
+                                     control = list( stopwords = TRUE, 
+                                                    tolower = TRUE,
+                                                    stemming = FALSE,
+                                                    removeNumbers = TRUE,
+                                                    bounds = list(global = c(4, Inf)
+                                                                  )
+                                                    )
+                                    ) 
+  return (term_)
+}
+
+get.terms.docs_ <- function ( corp_ ) {
+  corp_ <- tm_map(corp_, removePunctuation, ucp = TRUE)
+  term_ <- DocumentTermMatrix(corp_, 
+                                     control = list( stopwords = TRUE, 
+                                                    tolower = TRUE,
+                                                    stemming = FALSE,
+                                                    removeNumbers = TRUE,
+                                                    bounds = list(global = c(4, Inf)
+                                                                  )
+                                                    )
+                                    ) 
+  return (term_)
+} 
+
+get.frequency_ <- function ( term_ ) {
+  
+  fqt_ <- findFreqTerms(term_, lowfreq = 500, highfreq = Inf)
+  return (fqt_)
+}
+
+```
+# 1 Group 1 members
+ This group assignment was developed by the following students:
+ 
+    - Antonio Collante Caro (111 227 429) 
+    - Alexei Bormotov       (111 061 866) 
+    - Awal Lamidi           (111 250 779) 
+    - Kouassi Joël Bassa    (xxx xxx xxx) 
+    - Kyung Min Kim         (111 248 500) 
+    - Minhee Han            (111 263 600) 
+
+# 2 Situation
+The objective is to give you first hand experience in unstructured data analysis
+
+# 3 Analysis 
+
+## 3.1 Amazon 
+## 3.2 Facebook 
+## 3.3 Fitbit 
+According to the text analysis performed on the annual reports from the last five years from 2016 to 2020, Fitbit has gone through significant business development and growth. Fitbit has released 15 different products (13 fitness trackers, 1 earbuds and 1 scale) over the last five year period, which indicates that they have focused their business to develop new products in order to attract more users. This is shown in the list of 50 most frequent words used throughout five reports from 2016 to 2020 (highlighted the relevant terms in Appendix 1) that conveys how much emphasis Fitbit has put on the product development. Then, we have conducted more detailed clustering reports for each year and investigated more in detail to see why certain terms were more distinct than the others. In the 2016 report (Appendix 2), there were certain terms that were specific for the cluster 1 (2016) that stood out: connect, fit, stock and fitbit. This is because Fitbit acquired a fitness coaching app called FitStar in March of 2015 which connected many of the users who wanted to stay fit through training features provided through the subscription service (Pai, 2015). It is also worthwhile to note that Fitbit “filed for IPO with a NYSE listing” (Avi, Jani, & Bidkar, 2019) and entered the stock market under the name of “FIT” in 2015. To justify the specific terms outstanding in the 2020 report (Appendix 3), fit, merger, google, covid and outbreak, Fitbit’s stock market (NYSE: FIT) has been affected by the acquirement by Google and the subsequent merger of the company announced in 2019 and not to mention COVID-19 outbreak in 2020 that will significantly affect the stock market. Due to the page restriction of this assignment, the rest of the clustering reports are in Appendix 4.
+
+
+## 3.4 Intel Corporation 
+## 3.5 Netflix 
+
+# 4 List of files for each company
+```{r list_of_files , echo=FALSE}
+
+dest_ <- "data/"
+folder_ <- c('Amazon','Facebook','Fitbit','Intel','Netflix') 
+d_ <- paste( dest_, folder_[1],  sep='' )
+f.amazon_ <- get.files_( d_ , "pdf" )
+
+d_ <- paste( dest_, folder_[2],  sep='' )
+f.facebook_ <- get.files_( d_ , "pdf" )
+
+d_ <- paste( dest_, folder_[3],  sep='' )
+f.fitbit_ <- get.files_( d_ , "pdf" )
+
+d_ <- paste( dest_, folder_[4],  sep='' )
+f.intel_ <- get.files_( d_ , "pdf" )
+
+d_ <- paste( dest_, folder_[5],  sep='' )
+f.netflix_ <- get.files_( d_ , "pdf" )
+
+```
+
+* _Amazon_
+```{r file_amazon,  echo=FALSE}
+  f.amazon_
+```
+
+
+* _Facebook_
+```{r  file_facebook, echo=FALSE}
+  f.facebook_
+```
+
+* _Fitbit_
+```{r file_fitbit, echo=FALSE}
+  f.fitbit_
+
+```
+
+* _Intel_
+```{r file_intel, echo=FALSE}
+  f.intel_
+```
+
+* _Netflix_
+```{r  file_netflix, echo=FALSE}
+f.netflix_
+
+```
+
+# 5 Document stats
+
+## 5.1 Amazon
+**Below we look at the first 10 terms:**
+
+```{r  term_amazon, echo=FALSE}
+corps_ <- get.doc.corp(f.amazon_)
+term_  <- get.doc.terms_(corps_)
+
+# To inspect the TDM and see what it looks like,we can use the inspect function. 
+inspect(term_[1:10,])
+
+corr_ <- findAssocs(term_, c("revenue","client","gross","net"), 0.85)
+
+```
+
+**File content:**
+```{r  echo=FALSE}
+# To inspect file content
+str(corps_)
+
+# To find frequently occurring terms. To find words that occur at least 100 times
+fqt_ <- get.frequency_(term_)
+
+
+fqt_.tdm <- as.matrix(term_[fqt_,])
+fqt_ <- sort(apply(fqt_.tdm, 1, sum), decreasing = TRUE)
+docs.amazon_<- get.terms.docs_(corps_)
+
+```
+
+**The total counts for those words:**
+```{r  echo=FALSE}
+ fqt_.tdm 
+
+```
+
+**The frequency  for those words :**
+```{r  echo=FALSE}
+ fqt_ 
+
+ word.fqt.amazon_ <- data.frame(word = names(fqt_), freq = fqt_)
+ 
+ plot.fqt.amazon_ <- ggplot (subset(word.fqt.amazon_, freq>50), aes(x = reorder(word,-freq), y = freq))+
+                     geom_bar(stat = 'identity') + 
+                     theme( axis.text.x=element_text(angle = 45 , hjust =1) )
+ 
+```
+
+
+
+## 5.2 Facebook
+**Below we look at the first 10 terms:**
+
+```{r  term_facebook, echo=FALSE}
+
+corps_ <- get.doc.corp(f.facebook_)
+term_  <- get.doc.terms_(corps_)
+
+# To inspect the TDM and see what it looks like,we can use the inspect function. 
+inspect(term_[1:10,])
+
+# to find association with the 
+corr_ <- findAssocs(term_, c("revenue","client","gross","net"), 0.85)
+```
+
+**File content:**
+```{r  echo=FALSE}
+# To inspect file content
+str(corps_)
+# To find frequently occurring terms. To find words that occur at least 100 times
+fqt_ <- get.frequency_(term_)
+
+
+fqt_.tdm <- as.matrix(term_[fqt_,])
+fqt_ <- sort(apply(fqt_.tdm, 1, sum), decreasing = TRUE)
+docs.facebook_<- get.terms.docs_(corps_)
+
+```
+
+**The total counts for those words:**
+```{r  echo=FALSE}
+ fqt_.tdm 
+```
+
+**The frequency  for those words**
+```{r  echo=FALSE}
+ fqt_ 
+ word.fqt.facebook_ <- data.frame(word = names(fqt_), freq = fqt_)
+ 
+ plot.fqt.facebook_ <- ggplot (subset(word.fqt.facebook_, freq>50), aes(x = reorder(word,-freq), y = freq))+
+                     geom_bar(stat = 'identity') + 
+                     theme( axis.text.x=element_text(angle = 45 , hjust =1) )
+```
+
+Find association with the _"revenue","client","gross","net"_ at 85%:
+```{r  echo=FALSE}
+ corr_
+```
+
+## 5.3 Fitbit
+**Below we look at the first 10 terms:**
+
+```{r term_fitbit, echo=FALSE}
+corps_ <- get.doc.corp(f.fitbit_)
+term_  <- get.doc.terms_(corps_)
+
+# To inspect the TDM and see what it looks like,we can use the inspect function. 
+inspect(term_[1:10,])
+
+# to find association with the 
+corr_ <- findAssocs(term_, c("revenue","client","gross","net"), 0.85)
+```
+
+**File content:**
+```{r  echo=FALSE}
+# To inspect file content
+str(corps_)
+# To find frequently occurring terms. To find words that occur at least 100 times
+fqt_ <- get.frequency_(term_)
+
+
+fqt_.tdm <- as.matrix(term_[fqt_,])
+fqt_ <- sort(apply(fqt_.tdm, 1, sum), decreasing = TRUE)
+docs.fitbit_<- get.terms.docs_(corps_)
+
+```
+
+**The total counts for those words:**
+```{r  echo=FALSE}
+ fqt_.tdm 
+```
+
+**The frequency  for those words**
+```{r  echo=FALSE}
+ fqt_ 
+ word.fqt.fitbit_ <- data.frame(word = names(fqt_), freq = fqt_)
+ 
+ plot.fqt.fitbit_ <- ggplot (subset(word.fqt.fitbit_, freq>50), aes(x = reorder(word,-freq), y = freq))+
+                     geom_bar(stat = 'identity') + 
+                     theme( axis.text.x=element_text(angle = 45 , hjust =1) )
+```
+
+Find association with the _"revenue","client","gross","net"_ at 85%:
+```{r  echo=FALSE}
+ corr_
+```
+
+## 5.4 Intel Corporation
+**Below we look at the first 10 terms:**
+
+```{r  term_intel, echo=FALSE}
+corps_ <- get.doc.corp(f.intel_)
+term_  <- get.doc.terms_(corps_)
+
+# To inspect the TDM and see what it looks like,we can use the inspect function. 
+inspect(term_[1:10,])
+
+# to find association with the 
+corr_ <- findAssocs(term_, c("revenue","client","gross","net"), 0.85)
+```
+
+**File content:**
+```{r  echo=FALSE}
+# To inspect file content
+str(corps_)
+# To find frequently occurring terms. To find words that occur at least 100 times
+fqt_ <- get.frequency_(term_)
+
+
+fqt_.tdm <- as.matrix(term_[fqt_,])
+fqt_ <- sort(apply(fqt_.tdm, 1, sum), decreasing = TRUE)
+
+docs.intel_<- get.terms.docs_(corps_)
+
+```
+
+**The total counts for those words:**
+```{r  echo=FALSE}
+ fqt_.tdm 
+```
+
+The frequency  for those words 
+```{r  echo=FALSE}
+ fqt_ 
+ word.fqt.intel_ <- data.frame(word = names(fqt_), freq = fqt_)
+ 
+ plot.fqt.intel_ <- ggplot (subset(word.fqt.intel_, freq>1500), aes(x = reorder(word,-freq), y = freq))+
+                     geom_bar(stat = 'identity') + 
+                     theme( axis.text.x=element_text(angle = 45 , hjust =1) )
+```
+
+Find association with the _"revenue","client","gross","net"_ at 85%:
+```{r  echo=FALSE}
+ corr_
+```
+
+## 5.5 Netflix
+**Below we look at the first 10 terms:**
+
+```{r term_netflix, echo=FALSE}
+corps_ <- get.doc.corp(f.netflix_)
+term_  <- get.doc.terms_(corps_)
+
+# To inspect the TDM and see what it looks like,we can use the inspect function. 
+inspect(term_[1:10,])
+
+# to find association with the 
+corr_ <- findAssocs(term_, c("revenue","client","gross","net"), 0.85)
+
+#
+#distance_ <- dist(t(docs_), method="euclidian")   
+#cluster.netflix_ <- hclust(d=distance_, method="complete")   # for a different look try substituting: method="ward.D"
+
+```
+
+**File content:**
+```{r  echo=FALSE}
+# To inspect file content
+str(corps_)
+# To find frequently occurring terms. To find words that occur at least 100 times
+fqt_ <- get.frequency_(term_)
+
+
+fqt_.tdm <- as.matrix(term_[fqt_,])
+fqt_ <- sort(apply(fqt_.tdm, 1, sum), decreasing = TRUE)
+
+docs.netflix_<- get.terms.docs_(corps_)
+
+#DocumentTermMatrix(docs.netflix_, control = list (weigthing = weightTfIdf)) 
+
+
+
+```
+
+**The total counts for those words:**
+```{r  echo=FALSE}
+ fqt_.tdm 
+```
+
+**The frequency  for those words **
+```{r  echo=FALSE}
+ fqt_ 
+ 
+ word.fqt.netflix_ <- data.frame(word = names(fqt_), freq = fqt_)
+  
+ plot.fqt.netflix_ <- ggplot (subset(word.fqt.netflix_, freq>50), aes(x = reorder(word,-freq), y = freq))+
+                      geom_bar(stat = 'identity') + 
+                      theme( axis.text.x=element_text(angle = 45 , hjust =1) )
+ 
+ 
+ 
+```
+
+Find association with the _"revenue","client","gross","net"_ at 85%:
+```{r  echo=FALSE}
+ corr_
+
+```
+
+# 6 Visualization
+## 6.1 Amazon
+
+**The first 50 most frequent words:**
+
+```{r  echo=FALSE}
+plot.fqt.amazon_
+
+```
+
+**Plot words that occur at least 25 times**
+
+```{r  echo=FALSE}
+  set.seed(123)
+  wordcloud(word.fqt.amazon_$word , word.fqt.amazon_$freq , min.freq = 25, scale = c(5,.1), colors = brewer.pal(6, "Dark2"))
+```
+
+**Plot the 100 most frequently used works**
+
+```{r  echo=FALSE}
+  set.seed(123)
+  wordcloud(word.fqt.amazon_$word , word.fqt.amazon_$freq , max.words = 100, rot.per = 0.2, colors = brewer.pal(6, "Dark2"))
+```
+
+**Clustering**
+First calculate distance between words & then cluster them according to similarity.
+```{r  echo=FALSE}
+
+
+   bind_tf_idf( tidy(docs.amazon_),  term, document,  count) %>%
+              arrange(desc(tf_idf)) %>%
+              mutate(word = factor(term, levels = rev(unique(term))),
+              files = factor(document)) %>%
+              group_by(document) %>%
+              top_n(6, wt = tf_idf) %>%
+              ungroup() %>%
+   ggplot(aes(word, tf_idf, fill = document)) +
+         geom_bar(stat = "identity", alpha = .8, show.legend = FALSE) +
+         labs(title = "Highest term freq words in Fin.Statements by files",
+              x = "Words", y = "tf-idf") +
+         facet_wrap(~document, ncol = 2, scales = "free") +
+         coord_flip()
+   
+```
+
+## 6.2 Facebook
+
+**The first 50 most frequent words:**
+
+```{r  echo=FALSE}
+plot.fqt.facebook_
+```
+
+**Plot words that occur at least 25 times**
+```{r  echo=FALSE}
+  set.seed(123)
+  wordcloud(word.fqt.facebook_$word , word.fqt.facebook_$freq , min.freq = 25, scale = c(5,.1), colors = brewer.pal(6, "Dark2"))
+```
+
+**Plot the 100 most frequently used works**
+```{r  echo=FALSE}
+  set.seed(123)
+  wordcloud(word.fqt.facebook_$word , word.fqt.facebook_$freq , max.words = 100, rot.per = 0.2, colors = brewer.pal(6, "Dark2"))
+```
+
+**Clustering**
+First calculate distance between words & then cluster them according to similarity.
+```{r  echo=FALSE}
+
+
+   bind_tf_idf( tidy(docs.facebook_),  term, document,  count) %>%
+              arrange(desc(tf_idf)) %>%
+              mutate(word = factor(term, levels = rev(unique(term))),
+              files = factor(document)) %>%
+              group_by(document) %>%
+              top_n(6, wt = tf_idf) %>%
+              ungroup() %>%
+   ggplot(aes(word, tf_idf, fill = document)) +
+         geom_bar(stat = "identity", alpha = .8, show.legend = FALSE) +
+         labs(title = "Highest term freq words in Fin.Statements by files",
+              x = "Words", y = "tf-idf") +
+         facet_wrap(~document, ncol = 2, scales = "free") +
+         coord_flip()
+   
+```
+
+## 6.3 Fitbit
+
+**The first 50 most frequent words:**
+
+```{r  echo=FALSE}
+plot.fqt.fitbit_
+```
+
+**Plot words that occur at least 25 times**
+```{r  echo=FALSE}
+  set.seed(123)
+  wordcloud(word.fqt.fitbit_$word , word.fqt.fitbit_$freq , min.freq = 25, scale = c(5,.1), colors = brewer.pal(6, "Dark2"))
+```
+
+**Plot the 100 most frequently used works**
+```{r  echo=FALSE}
+  set.seed(123)
+  wordcloud(word.fqt.fitbit_$word , word.fqt.fitbit_$freq , max.words = 100, rot.per = 0.2, colors = brewer.pal(6, "Dark2"))
+```
+
+**Clustering**
+First calculate distance between words & then cluster them according to similarity.
+```{r  echo=FALSE}
+
+
+   bind_tf_idf( tidy(docs.fitbit_),  term, document,  count) %>%
+              arrange(desc(tf_idf)) %>%
+              mutate(word = factor(term, levels = rev(unique(term))),
+              files = factor(document)) %>%
+              group_by(document) %>%
+              top_n(6, wt = tf_idf) %>%
+              ungroup() %>%
+   ggplot(aes(word, tf_idf, fill = document)) +
+         geom_bar(stat = "identity", alpha = .8, show.legend = FALSE) +
+         labs(title = "Highest term freq words in Fin.Statements by files",
+              x = "Words", y = "tf-idf") +
+         facet_wrap(~document, ncol = 2, scales = "free") +
+         coord_flip()
+   
+```
+
+## 6.4 Intel Corporation
+
+**The first 300 most frequent words (since we have files for 10 years ):**
+
+```{r  echo=FALSE}
+plot.fqt.intel_
+```
+
+**Plot words that occur at least 25 times**
+```{r  echo=FALSE}
+  set.seed(1234)
+  wordcloud(word.fqt.intel_$word , word.fqt.intel_$freq , min.freq = 25, scale = c(5,.1), colors = brewer.pal(6, "Dark2"))
+```
+
+**Plot the 100 most frequently used works**
+```{r  echo=FALSE}
+  set.seed(1234)
+  wordcloud(word.fqt.intel_$word , word.fqt.intel_$freq , max.words = 100, rot.per = 0.2, colors = brewer.pal(6, "Dark2"))
+```
+
+
+**Clustering**
+First calculate distance between words & then cluster them according to similarity.
+```{r  echo=FALSE}
+
+
+   bind_tf_idf( tidy(docs.intel_),  term, document,  count) %>%
+              arrange(desc(tf_idf)) %>%
+              mutate(word = factor(term, levels = rev(unique(term))),
+              files = factor(document)) %>%
+              group_by(document) %>%
+              top_n(6, wt = tf_idf) %>%
+              ungroup() %>%
+   ggplot(aes(word, tf_idf, fill = document)) +
+         geom_bar(stat = "identity", alpha = .8, show.legend = FALSE) +
+         labs(title = "Highest term freq words in Fin.Statements by files",
+              x = "Words", y = "tf-idf") +
+         facet_wrap(~document, ncol = 2, scales = "free") +
+         coord_flip()
+   
+```
+
+## 6.5 Netflix
+**The first 50 most frequent words:**
+
+```{r  echo=FALSE}
+plot.fqt.netflix_
+```
+
+**Plot words that occur at least 25 times**
+```{r  echo=FALSE}
+  set.seed(123)
+  wordcloud(word.fqt.netflix_$word , word.fqt.netflix_$freq , min.freq = 25, scale = c(5,.1), colors = brewer.pal(6, "Dark2"))
+```
+
+**Plot the 100 most frequently used works**
+```{r  echo=FALSE}
+  set.seed(123)
+  wordcloud(word.fqt.netflix_$word , word.fqt.netflix_$freq , max.words = 100, rot.per = 0.2, colors = brewer.pal(6, "Dark2"))
+```
+
+**Clustering**
+First calculate distance between words & then cluster them according to similarity.
+```{r  echo=FALSE}
+
+
+   bind_tf_idf( tidy(docs.netflix_),  term, document,  count) %>%
+              arrange(desc(tf_idf)) %>%
+              mutate(word = factor(term, levels = rev(unique(term))),
+              files = factor(document)) %>%
+              group_by(document) %>%
+              top_n(6, wt = tf_idf) %>%
+              ungroup() %>%
+   ggplot(aes(word, tf_idf, fill = document)) +
+         geom_bar(stat = "identity", alpha = .8, show.legend = FALSE) +
+         labs(title = "Highest term freq words in Fin.Statements by files",
+              x = "Words", y = "tf-idf") +
+         facet_wrap(~document, ncol = 2, scales = "free") +
+         coord_flip()
+   
+```
+
+# 7 References
+
+Avi, Jani, S., & Bidkar, C. (2019, March 29). The Fitbit Story - How It Scripted Wearable Tech's Biggest Success Story. Retrieved from https://techstory.in/the-fitbit-story-how-it-scripted-wearable-techs-biggest-success-story/
+
+Pai, A. (2015, December 1). Fitbit spent at least $17.8M to acquire FitStar. Retrieved from https://www.mobihealthnews.com/41972/fitbit-spent-at-least-17-8m-to-acquire-fitstar
+
+https://www.tidytextmining.com/
+
+https://rstudio-pubs-static.s3.amazonaws.com/265713_cbef910aee7642dc8b62996e38d2825d.html
+
+http://www.sthda.com/french/wiki/text-mining-et-nuage-de-mots-avec-le-logiciel-r-5-etapes-simples-a-savoir
+
+https://rpubs.com/tsholliger/301914
